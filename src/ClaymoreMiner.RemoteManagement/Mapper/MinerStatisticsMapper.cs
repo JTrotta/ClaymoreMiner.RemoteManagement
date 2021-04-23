@@ -110,6 +110,7 @@ namespace ClaymoreMiner.RemoteManagement.Mapper
 
             var (temperature, _) = metrics.TryGetAndParse(0);
             var (fanSpeed, _) = metrics.TryGetAndParse(1);
+            var (power, _) = metrics.TryGetAndParse(2);
 
             var gpuStats = new GpuStats
             {
@@ -117,7 +118,8 @@ namespace ClaymoreMiner.RemoteManagement.Mapper
                 EthereumHashrate = parseEthereumHashrateResult.value,
                 DecredHashrate = parseDecredHashrateResult.value,
                 Temperature = temperature,
-                FanSpeed = fanSpeed
+                FanSpeed = fanSpeed,
+                Power = power,
             };
             return gpuStats;
         }

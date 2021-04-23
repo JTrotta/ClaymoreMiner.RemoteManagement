@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -5,19 +6,20 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using StreamJsonRpc;
+using StreamJsonRpc.Protocol;
 
 namespace ClaymoreMiner.RemoteManagement.Rpc
 {
-    internal class ClaymoreApiMessageHandler : DelimitedMessageHandler
+    internal class ClaymoreApiMessageHandler : StreamMessageHandler
     {
         private readonly string _password;
 
-        public ClaymoreApiMessageHandler(string password, Stream stream) : base(stream, stream, Encoding.ASCII)
+        public ClaymoreApiMessageHandler(string password, Stream stream) : base(stream, stream, new JsonMessageFormatter())
         {
             _password = password;
         }
 
-        protected override async Task<string> ReadCoreAsync(CancellationToken cancellationToken)
+        protected override async ValueTask<JsonRpcMessage> ReadCoreAsync(CancellationToken cancellationToken)
         {
             using (var data = new MemoryStream())
             {
@@ -32,12 +34,11 @@ namespace ClaymoreMiner.RemoteManagement.Rpc
                     if (contentBytes.Length == 0)
                         return null;
 
-                    var content = Encoding.GetString(contentBytes);
-
+                    //var content = Encoding.ASCII.GetString(contentBytes);
+                    var ros = new ReadOnlySequence<byte>(contentBytes);
                     try
                     {
-                        JObject.Parse(content);
-                        return content;
+                        return this.Formatter.Deserialize(ros);
                     }
                     catch (JsonException)
                     {
@@ -46,11 +47,14 @@ namespace ClaymoreMiner.RemoteManagement.Rpc
             }
         }
 
-        protected override async Task WriteCoreAsync(string content, Encoding contentEncoding, CancellationToken cancellationToken)
-        {
-            var contentBytes = contentEncoding.GetBytes(TransformContent(content));
 
-            await SendingStream.WriteAsync(contentBytes, 0, contentBytes.Length, cancellationToken);
+        protected override ValueTask WriteCoreAsync(JsonRpcMessage content, CancellationToken cancellationToken)
+        {
+            var contentBytes = Encoding.ASCII.GetBytes(TransformContent(content.ToString()));
+
+            Task task = SendingStream.WriteAsync(contentBytes, 0, contentBytes.Length, cancellationToken);
+
+            return new ValueTask(task);
         }
 
         private string TransformContent(string content)

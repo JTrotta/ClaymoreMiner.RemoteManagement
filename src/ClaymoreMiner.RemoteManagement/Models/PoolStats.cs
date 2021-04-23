@@ -14,6 +14,10 @@
         /// </summary>
         public int Hashrate { get; set; }
         /// <summary>
+        /// Total power.
+        /// </summary>
+        public int Power { get; set; }
+        /// <summary>
         /// Total shares.
         /// </summary>
         public int Shares { get; set; }

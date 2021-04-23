@@ -27,5 +27,10 @@ namespace ClaymoreMiner.RemoteManagement.Models
         /// Fanspeed %
         /// </summary>
         public int FanSpeed { get; set; }
+
+        /// <summary>
+        /// Power Watts
+        /// </summary>
+        public int Power { get; set; }
     }
 }
